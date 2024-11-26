@@ -62,7 +62,7 @@ export const WharfKitPage = () => {
   const generatePasskey = async () => {
     const challenge = crypto.getRandomValues(new Uint8Array(32));
 
-    const rpId = "vercel.com";
+    const rpId = "vercel.app";
     // const rpId = "localhost";
 
     const credential = (await navigator.credentials.create({
