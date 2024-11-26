@@ -36,16 +36,16 @@ export const POST = async (req: NextRequest) => {
     }
 
     const newKeys = [
-      // ...activePermission.required_auth.keys,
-      {
-        key: "EOS68gVr5f4Gbny8TbDQ68ioGNNRabh6FeRfMAuSDFKgY7944gbUS",
-        weight: 1,
-      },
+      ...activePermission.required_auth.keys,
+      // {
+      //   key: "EOS68gVr5f4Gbny8TbDQ68ioGNNRabh6FeRfMAuSDFKgY7944gbUS",
+      //   weight: 1,
+      // },
       {
         key: data.pubkey,
         weight: 1,
       },
-    ];
+    ].sort((a, b) => a.key.toString().localeCompare(b.key.toString()));
 
     const result = await session.transact({
       actions: [
