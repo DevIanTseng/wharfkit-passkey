@@ -1,0 +1,32 @@
+{
+  "name": "wharfkit-demo-passkey",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@wharfkit/session": "^1.4.0",
+    "@wharfkit/wallet-plugin-anchor": "^1.4.0",
+    "@wharfkit/wallet-plugin-privatekey": "^1.1.0",
+    "@wharfkit/web-renderer": "^1.4.1",
+    "axios": "^1.7.8",
+    "cbor2": "^1.7.1",
+    "elliptic": "6.5.4",
+    "next": "14.2.16",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/elliptic": "^6.4.13",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}
