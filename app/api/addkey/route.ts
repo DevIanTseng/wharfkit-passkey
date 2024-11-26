@@ -1,4 +1,4 @@
-import { Chains, PrivateKey, Session } from "@wharfkit/session";
+import { Authority, Chains, PrivateKey, Session } from "@wharfkit/session";
 import { NextRequest, NextResponse } from "next/server";
 import { WalletPluginPrivateKey } from "@wharfkit/wallet-plugin-privatekey";
 
@@ -35,17 +35,20 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    const newKeys = [
-      ...activePermission.required_auth.keys,
-      // {
-      //   key: "EOS68gVr5f4Gbny8TbDQ68ioGNNRabh6FeRfMAuSDFKgY7944gbUS",
-      //   weight: 1,
-      // },
-      {
-        key: data.pubkey,
-        weight: 1,
-      },
-    ].sort((a, b) => a.key.toString().localeCompare(b.key.toString()));
+    const newAuth = Authority.from({
+      threshold: 1,
+      keys: [
+        ...activePermission.required_auth.keys,
+        // {
+        //   key: "EOS68gVr5f4Gbny8TbDQ68ioGNNRabh6FeRfMAuSDFKgY7944gbUS",
+        //   weight: 1,
+        // },
+        {
+          key: data.pubkey,
+          weight: 1,
+        },
+      ],
+    });
 
     const result = await session.transact({
       actions: [
@@ -62,12 +65,7 @@ export const POST = async (req: NextRequest) => {
             account: session.actor.toString(),
             permission: "active",
             parent: "owner",
-            auth: {
-              threshold: activePermission.required_auth.threshold,
-              keys: newKeys,
-              accounts: activePermission.required_auth.accounts,
-              waits: activePermission.required_auth.waits,
-            },
+            auth: newAuth,
           },
         },
       ],
