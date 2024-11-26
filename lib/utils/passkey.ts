@@ -88,10 +88,14 @@ export const decodeKey = async (payload: {
   ser.pushString(payload.rpid);
   const compact = ser.asUint8Array();
 
+  console.log(compact);
+
   const key = publicKeyToString({
     type: KeyType.wa,
     data: compact,
   });
+
+  console.log(key);
 
   return {
     credentialId: arrayToHex(credentialId),
