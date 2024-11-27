@@ -1,17 +1,16 @@
 "use client";
 
-import SessionKit, { Chains, Session } from "@wharfkit/session";
+import SessionKit, { Chains, PrivateKey, Session } from "@wharfkit/session";
 import { useMemo, useState } from "react";
 import { WebRenderer } from "@wharfkit/web-renderer";
 import { WebAuthnWallet } from "@/lib/wallet/passkey-wallet";
-import { arrayToHex } from "@/lib/utils";
+import { arrayToHex, sortPubKeys } from "@/lib/utils";
 import { decodeKey } from "@/lib/utils/passkey";
-import axios from "axios";
 import { PASSKEY_RP_ID } from "@/lib/const";
+import { WalletPluginPrivateKey } from "@wharfkit/wallet-plugin-privatekey";
 
 export const WharfKitPage = () => {
   const [session, setSession] = useState<Session | null>(null);
-  const [message, setMessage] = useState<string>("");
 
   const sessionKit = useMemo(() => {
     return new SessionKit({
@@ -21,6 +20,127 @@ export const WharfKitPage = () => {
       walletPlugins: [new WebAuthnWallet()],
     });
   }, []);
+
+  const privateKeySession = useMemo(() => {
+    return new Session({
+      chain: Chains.Jungle4,
+      actor: "elenawitheos",
+      permission: "owner",
+      walletPlugin: new WalletPluginPrivateKey(
+        PrivateKey.fromString(
+          "5K9wrr6ajxCWb8nu31R5beJLTzxbtpo2bZfCbpnjwWkLSgvDt2D"
+        )
+      ),
+    });
+  }, []);
+
+  const changeWAPermission = async (pubkey: string) => {
+    if (!privateKeySession) {
+      throw new Error("Private key session not initialized");
+    }
+
+    const account = await privateKeySession.client.v1.chain.get_account(
+      privateKeySession.actor
+    );
+    const activePermission = account.permissions.find(
+      (p) => p.perm_name.toString() === "active"
+    );
+
+    if (!activePermission) {
+      throw new Error("No active permission found");
+    }
+
+    const pubkeys = activePermission.required_auth.keys.map((k) => ({
+      key: k.key.toString(),
+      weight: k.weight.toNumber(),
+    }));
+
+    pubkeys.push({
+      key: pubkey,
+      weight: 1,
+    });
+
+    const sortedPubkeys = sortPubKeys(pubkeys);
+
+    console.log("sorted pubkeys:", sortedPubkeys);
+
+    const result = await privateKeySession.transact({
+      actions: [
+        {
+          account: "eosio",
+          name: "updateauth",
+          authorization: [
+            {
+              actor: privateKeySession.actor,
+              permission: "owner",
+            },
+          ],
+          data: {
+            account: privateKeySession.actor.toString(),
+            permission: "active",
+            parent: "owner",
+            auth: {
+              threshold: 1,
+              keys: sortedPubkeys,
+              accounts: activePermission.required_auth.accounts,
+              waits: activePermission.required_auth.waits,
+            },
+          },
+        },
+      ],
+    });
+
+    if (result.response) {
+      console.log(
+        `change permission transaction id: ${result.response.transaction_id}`
+      );
+    }
+  };
+
+  const changeK1Permission = async (pubkey: string) => {};
+
+  const resetPermission = async () => {
+    if (!privateKeySession) {
+      throw new Error("Private key session not initialized");
+    }
+
+    const result = await privateKeySession.transact({
+      actions: [
+        {
+          account: "eosio",
+          name: "updateauth",
+          authorization: [
+            {
+              actor: privateKeySession.actor,
+              permission: "owner",
+            },
+          ],
+          data: {
+            account: privateKeySession.actor.toString(),
+            permission: "active",
+            parent: "owner",
+            auth: {
+              threshold: 1,
+              keys: [
+                {
+                  key: "EOS68gVr5f4Gbny8TbDQ68ioGNNRabh6FeRfMAuSDFKgY7944gbUS",
+                  weight: 1,
+                },
+              ],
+              accounts: [],
+              waits: [],
+            },
+          },
+        },
+      ],
+    });
+
+    if (result.response) {
+      console.log(
+        `reset permission transaction id: ${result.response.transaction_id}`
+      );
+    }
+  };
 
   const login = async () => {
     const { session } = await sessionKit.login();
@@ -66,7 +186,8 @@ export const WharfKitPage = () => {
 
       localStorage.setItem("current-passkey", JSON.stringify(matchedPasskey));
 
-      console.log("Current passkey:", matchedPasskey);
+      console.log("current used passkey id:", matchedPasskey.id);
+      console.log("current used passkey pubkey:", matchedPasskey.pubkey);
     } catch (error) {
       console.error("Error getting credentials:", error);
       throw error;
@@ -76,7 +197,9 @@ export const WharfKitPage = () => {
   };
 
   const signTransaction = async () => {
-    if (!session) return;
+    if (!session) {
+      throw new Error("Session not initialized");
+    }
 
     try {
       const result = await session.transact({
@@ -101,7 +224,9 @@ export const WharfKitPage = () => {
       });
 
       if (result.response) {
-        setMessage(`transaction_id: ${result.response.transaction_id}`);
+        console.log(
+          `transfer transaction id: ${result.response.transaction_id}`
+        );
       }
     } catch (error) {
       console.log(error);
@@ -151,6 +276,9 @@ export const WharfKitPage = () => {
       attestationObject,
     });
 
+    console.log("new passkey credential id:", result.credentialId);
+    console.log("new passkey pubkey:", result.key);
+
     // TODO: save passkey to contract
     const existingPasskeys = JSON.parse(
       localStorage.getItem("passkeys") || "[]"
@@ -163,17 +291,9 @@ export const WharfKitPage = () => {
 
     localStorage.setItem("passkeys", JSON.stringify(existingPasskeys));
 
-    try {
-      const res = await axios.post<{
-        transaction_id: string;
-      }>("/api/addkey", {
-        pubkey: result.key,
-      });
-
-      setMessage(`transaction_id: ${res.data.transaction_id}`);
-    } catch (error) {
-      console.log(error);
-    }
+    console.log("starting change permission use pubkey:", result.key);
+    await changeWAPermission(result.key);
+    console.log("change permission success");
   };
 
   return (
@@ -197,8 +317,13 @@ export const WharfKitPage = () => {
         >
           Sign Transaction
         </button>
+        <button
+          className="border border-slate-400 rounded-md bg-blue-400 text-white hover:opacity-80 transition-opacity px-4 py-2 text-sm font-medium"
+          onClick={() => resetPermission()}
+        >
+          Reset Permission
+        </button>
       </div>
-      {message && <div>{message}</div>}
     </main>
   );
 };
