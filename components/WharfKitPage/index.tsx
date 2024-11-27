@@ -7,6 +7,7 @@ import { WebAuthnWallet } from "@/lib/wallet/passkey-wallet";
 import { arrayToHex } from "@/lib/utils";
 import { decodeKey } from "@/lib/utils/passkey";
 import axios from "axios";
+import { PASSKEY_RP_ID } from "@/lib/const";
 
 export const WharfKitPage = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -23,6 +24,54 @@ export const WharfKitPage = () => {
 
   const login = async () => {
     const { session } = await sessionKit.login();
+
+    // TODO: Get passkey array from contract
+    const passkeysArray = JSON.parse(
+      localStorage.getItem("passkeys") || "[]"
+    ) as {
+      id: string;
+      pubkey: string;
+    }[];
+
+    if (passkeysArray.length === 0) {
+      throw new Error("No passkeys found in contract");
+    }
+
+    try {
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+
+      const credentials = (await navigator.credentials.get({
+        publicKey: {
+          rpId: PASSKEY_RP_ID,
+          userVerification: "required",
+          challenge,
+          timeout: 60000,
+        },
+        mediation: "optional",
+      })) as PublicKeyCredential;
+
+      if (!credentials) {
+        throw new Error("No credentials found");
+      }
+
+      const credentialId = arrayToHex(new Uint8Array(credentials.rawId));
+
+      const matchedPasskey = passkeysArray.find(
+        (passkey) => passkey.id === credentialId
+      );
+
+      if (!matchedPasskey) {
+        throw new Error("No matched passkey found");
+      }
+
+      localStorage.setItem("current-passkey", JSON.stringify(matchedPasskey));
+
+      console.log("Current passkey:", matchedPasskey);
+    } catch (error) {
+      console.error("Error getting credentials:", error);
+      throw error;
+    }
+
     setSession(session);
   };
 
@@ -62,19 +111,18 @@ export const WharfKitPage = () => {
   const generatePasskey = async () => {
     const challenge = crypto.getRandomValues(new Uint8Array(32));
 
-    const rpId = "wharfkit-passkey.vercel.app";
-    // const rpId = "localhost";
+    const randomId = crypto.getRandomValues(new Uint8Array(16));
 
     const credential = (await navigator.credentials.create({
       publicKey: {
         rp: {
-          name: "passkey-wallet",
-          id: rpId,
+          name: `passkey-wallet-${arrayToHex(randomId)}`,
+          id: PASSKEY_RP_ID,
         },
         user: {
-          id: new Uint8Array(16),
-          name: "passkey-wallet",
-          displayName: "Passkey Wallet",
+          id: randomId,
+          name: `passkey-wallet-${arrayToHex(randomId)}`,
+          displayName: `passkey-wallet-${arrayToHex(randomId)}`,
         },
         pubKeyCredParams: [
           {
@@ -98,18 +146,22 @@ export const WharfKitPage = () => {
     );
 
     const result = await decodeKey({
-      rpid: rpId,
+      rpid: PASSKEY_RP_ID,
       id,
       attestationObject,
     });
 
-    localStorage.setItem(
-      "passkey",
-      JSON.stringify({
-        id,
-        pubkey: result.key,
-      })
+    // TODO: save passkey to contract
+    const existingPasskeys = JSON.parse(
+      localStorage.getItem("passkeys") || "[]"
     );
+
+    existingPasskeys.push({
+      id,
+      pubkey: result.key,
+    });
+
+    localStorage.setItem("passkeys", JSON.stringify(existingPasskeys));
 
     try {
       const res = await axios.post<{

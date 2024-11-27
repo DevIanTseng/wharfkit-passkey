@@ -35,14 +35,10 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    const newAuth = Authority.from({
+    const auth = Authority.from({
       threshold: 1,
       keys: [
         ...activePermission.required_auth.keys,
-        // {
-        //   key: "EOS68gVr5f4Gbny8TbDQ68ioGNNRabh6FeRfMAuSDFKgY7944gbUS",
-        //   weight: 1,
-        // },
         {
           key: data.pubkey,
           weight: 1,
@@ -65,7 +61,7 @@ export const POST = async (req: NextRequest) => {
             account: session.actor.toString(),
             permission: "active",
             parent: "owner",
-            auth: newAuth,
+            auth,
           },
         },
       ],

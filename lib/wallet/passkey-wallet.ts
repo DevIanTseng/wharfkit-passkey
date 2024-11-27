@@ -21,6 +21,7 @@ import {
 
 export class WebAuthnWallet extends AbstractWalletPlugin {
   public id = "wallet-plugin-passkey";
+
   readonly metadata: WalletPluginMetadata = WalletPluginMetadata.from({
     name: "Passkey Wallet",
     description: "Sign transactions using WebAuthn/Passkey",
@@ -61,7 +62,7 @@ export class WebAuthnWallet extends AbstractWalletPlugin {
       )
     );
 
-    const passkey = localStorage.getItem("passkey");
+    const passkey = localStorage.getItem("current-passkey");
 
     if (!passkey) {
       throw new Error("No passkey found");
