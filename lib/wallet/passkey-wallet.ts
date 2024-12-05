@@ -28,7 +28,7 @@ export class WebAuthnWallet extends AbstractWalletPlugin {
   });
 
   async login(context: LoginContext): Promise<WalletPluginLoginResponse> {
-    const accountName = localStorage.getItem("account-name");
+    const accountName = localStorage.getItem("account");
 
     if (!accountName) {
       throw new Error("Account name not found");
