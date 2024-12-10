@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
 ## Getting Started
 
 First, run the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm i
+
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Online demo: [https://wharfkit-passkey.vercel.app/](https://wharfkit-passkey.vercel.app/).
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+Please change `/lib/const/index.ts` if you want to test locally.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+EOS passkey transaction only support `https` protocol, so you need to use SSL certificate if you want to test locally.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## How to test
 
-## Deploy on Vercel
+### Create account
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. open [https://wharfkit-passkey.vercel.app/](https://wharfkit-passkey.vercel.app/).
+2. click `Generate Passkey` button and input your `Account`.
+3. click `Create Account` button to create new account.
+4. open console to see details.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Send transaction
+
+> Make sure `Account` input is correct, and you have passkey in your browser.
+
+1. click `Login` button.
+2. click `Sign Transaction` button.
+3. open console to see details.
+
+### Backup account
+
+> Make sure you have already login.
+
+1. click `Generate K1 Recovery Key` button.
+2. Save `K1 Recovery Key` to your safe place.
+3. click `Append K1 Pubkey` button.
+4. open console to see details.
+
+### Recover account in new device
+
+> Please delete your localStorage or passkey in your device to test.
+
+1. input your `Account` and `K1 Private Key`.
+2. click `Generate Passkey` button.
+3. click `Append New WA Pubkey` button.
+4. open console to see details.
