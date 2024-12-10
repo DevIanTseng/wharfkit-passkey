@@ -37,10 +37,10 @@ EOS passkey transaction only support `https` protocol, so you need to use SSL ce
 
 ### Backup account
 
-> Make sure you have already login.
+> Make sure you have already logged in.
 
 1. click `Generate K1 Recovery Key` button.
-2. Save `K1 Recovery Key` to your safe place.
+2. save `K1 Recovery Key` to your safe place.
 3. click `Append K1 Pubkey` button.
 4. open console to see details.
 
