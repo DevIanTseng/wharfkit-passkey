@@ -18,7 +18,7 @@ Please change `/lib/const/index.ts` if you want to test locally.
 
 EOS passkey transaction only support `https` protocol, so you need to use SSL certificate if you want to test locally.
 
-## How to test
+## How To Test
 
 ### Create account
 
